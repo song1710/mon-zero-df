@@ -1,0 +1,48 @@
+version: '3'
+services:
+  prometheus:
+    image: gaomou2333/prometheus-zero-armv5:2.47.0
+    volumes:
+      - ${PWD}/prometheus/conf:/etc/prometheus/
+      - ${PWD}/prometheus/data:/data/prometheus
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime
+    command:
+      - /usr/local/prometheus/prometheus
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/data/prometheus
+      - --storage.tsdb.retention=60d
+#      - --web.enable-lifecycle
+#      - --web.console.libraries=/usr/share/prometheus/console_libraries
+#      - --web.console.templates=/usr/share/prometheus/consoles
+#      - --web.route-prefix=/prometheus
+#    links:
+#      - alertmanager
+    ports:
+      - 9090:9090
+    networks:
+      - monitor
+
+  grafana:
+    image: gaomou2333/grafana-zero-armv6:9.5.9
+    volumes:
+      - ${PWD}/grafana/conf/defaults.ini:/usr/local/grafana/conf/defaults.ini
+      - ${PWD}/grafana/data:/usr/local/grafana/data
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime
+    command:
+      - /usr/local/grafana/bin/grafana
+      - server
+      - --config=/usr/local/grafana/conf/defaults.ini
+      - --homepath=/usr/local/grafana
+    ports:
+      - 3000:3000
+    links:
+      - prometheus
+    networks:
+      - monitor
+
+networks:
+  monitor:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
